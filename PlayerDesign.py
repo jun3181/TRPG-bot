@@ -253,5 +253,5 @@ class PlayerDesignManager:
         return True, "조회 성공", payload
 
 
-DEFAULT_DATA_ROOT = Path(os.getenv("PLAYER_DATA_ROOT", "/TRPG-BOT/data"))
+DEFAULT_DATA_ROOT = Path(os.getenv("PLAYER_DATA_ROOT", Path(__file__).resolve().parent / "playerdata"))
 player_design_manager = PlayerDesignManager(DEFAULT_DATA_ROOT)
