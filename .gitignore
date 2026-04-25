@@ -216,3 +216,23 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# =========================
+# Discord Bot Secrets
+# =========================
+.env
+*.env
+.env.*
+!.env.example
+
+# =========================
+# Node.js remnants
+# 예전에 npm 설치했던 흔적
+# =========================
+node_modules/
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
