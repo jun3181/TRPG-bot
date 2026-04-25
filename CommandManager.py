@@ -4,6 +4,13 @@ from PlayerDesign import player_design_manager
 
 
 def register_commands(bot: commands.Bot) -> None:
+
+    @bot.command(name="TRPG시작", aliases=["티알피지시작", "티얼피지시작"])
+    async def trpg_start_command(ctx: commands.Context):
+        is_first, message = player_design_manager.start_message(ctx.author.id)
+        prefix = "✅ " if is_first else "ℹ️ "
+        await ctx.send(prefix + message)
+
     @bot.command(name="아이디")
     async def set_id_command(ctx: commands.Context, login_id: str):
         ok, message = player_design_manager.set_login_id(ctx.author.id, login_id)

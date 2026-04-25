@@ -148,6 +148,24 @@ class PlayerDesignManager:
     def is_logged_in(self, user_id: int) -> bool:
         return user_id in self.logged_in_users
 
+    def is_first_user(self, user_id: int) -> bool:
+        return not self._auth_file(user_id).exists()
+
+    def start_message(self, user_id: int) -> tuple[bool, str]:
+        if self.is_first_user(user_id):
+            return (
+                True,
+                "처음 오신 플레이어네요! 1단계부터 시작하세요:\n"
+                "1) !아이디 <아이디>\n"
+                "2) !비번 <비밀번호>\n"
+                "3) !로그인 <아이디> <비밀번호>",
+            )
+
+        return (
+            False,
+            "기존 플레이어입니다. 로그인하세요! !아이디 / 비밀번호\n(실행: !로그인 <아이디> <비밀번호>)",
+        )
+
     # 2) !닉네임
     def set_nickname(self, user_id: int, nickname: str) -> tuple[bool, str]:
         if not self.is_logged_in(user_id):
