@@ -101,7 +101,7 @@ class PlayerDesignManager:
         setup = self._load_setup(user_id)
         setup["login_id"] = login_id.strip()
         self._save_setup(user_id, setup)
-        return True, f"아이디가 설정되었습니다: {setup['login_id']}"
+        return True, f"아이디가 설정되었습니다: {setup['login_id']}\n다음 단계: `!비번 <비밀번호>`"
 
     # 1) !비번
     def set_password(self, user_id: int, password: str) -> tuple[bool, str]:
@@ -128,7 +128,7 @@ class PlayerDesignManager:
 
         setup["password_set"] = True
         self._save_setup(user_id, setup)
-        return True, "비밀번호가 설정되었고 계정 생성이 완료되었습니다. 이제 `!로그인 <아이디> <비번>`을 실행하세요."
+        return True, "비밀번호가 설정되었고 계정 생성이 완료되었습니다.\n다음 단계: `!로그인 <아이디> <비밀번호>`"
 
     def login(self, user_id: int, login_id: str, password: str) -> tuple[bool, str]:
         auth = self._load_json(self._auth_file(user_id))
@@ -143,7 +143,7 @@ class PlayerDesignManager:
             return False, "비밀번호가 올바르지 않습니다."
 
         self.logged_in_users.add(user_id)
-        return True, "로그인 성공! 캐릭터 생성 단계를 진행하세요."
+        return True, "로그인 성공!\n다음 단계: `!닉네임 <닉네임>`"
 
     def is_logged_in(self, user_id: int) -> bool:
         return user_id in self.logged_in_users
@@ -177,7 +177,7 @@ class PlayerDesignManager:
         setup = self._load_setup(user_id)
         setup["nickname"] = nickname.strip()
         self._save_setup(user_id, setup)
-        return True, f"닉네임이 설정되었습니다: {setup['nickname']}"
+        return True, f"닉네임이 설정되었습니다: {setup['nickname']}\n다음 단계: `!직업설정 <전사|궁수|힐러|도적>`"
 
     # 3) !직업설정
     def set_job(self, user_id: int, job: str) -> tuple[bool, str]:
@@ -191,7 +191,7 @@ class PlayerDesignManager:
         setup = self._load_setup(user_id)
         setup["job"] = normalized_job
         self._save_setup(user_id, setup)
-        return True, f"직업이 설정되었습니다: {normalized_job}"
+        return True, f"직업이 설정되었습니다: {normalized_job}\n다음 단계: `!주사위 던지기`"
 
     # 4) !주사위 던지기
     def roll_dice(self, user_id: int) -> tuple[bool, str, dict[str, Any] | None]:
@@ -207,7 +207,7 @@ class PlayerDesignManager:
         base_stats = self._roll_stats()
         setup["dice"] = base_stats
         self._save_setup(user_id, setup)
-        return True, "주사위를 굴렸습니다.", base_stats
+        return True, "주사위를 굴렸습니다.\n다음 단계: `!캐릭터생성` 또는 `!캐릭터 생성`", base_stats
 
     # 마지막 !캐릭터 생성
     def finalize_character(self, user_id: int) -> tuple[bool, str, dict[str, Any] | None]:
@@ -244,7 +244,7 @@ class PlayerDesignManager:
             "updated_at": now,
         }
         self._save_json(self._player_file(user_id), player_payload)
-        return True, "캐릭터 생성이 완료되었습니다.", player_payload
+        return True, "캐릭터 생성이 완료되었습니다! TRPG 준비 완료입니다.\n다음 단계: `!캐릭터 조회`로 확인하세요.", player_payload
 
     def get_character(self, user_id: int) -> tuple[bool, str, dict[str, Any] | None]:
         payload = self._load_json(self._player_file(user_id))
