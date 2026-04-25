@@ -143,6 +143,10 @@ class PlayerDesignManager:
             return False, "비밀번호가 올바르지 않습니다."
 
         self.logged_in_users.add(user_id)
+
+        if self._player_file(user_id).exists():
+            return True, "로그인 성공! 기존 플레이어 확인 완료. 게임 시작됩니다!"
+
         return True, "로그인 성공!\n다음 단계: `!닉네임 <닉네임>`"
 
     def is_logged_in(self, user_id: int) -> bool:
