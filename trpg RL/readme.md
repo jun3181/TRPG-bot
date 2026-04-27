@@ -27,6 +27,14 @@ OPENAI_API_KEY=<YOUR_API_KEY>
 OPENAI_MODEL=gpt-4.1-mini
 ```
 
+Gemini를 사용하려면 아래처럼 설정하세요.
+
+```env
+TRPG_API_PROVIDER=gemini
+GEMINI_API_KEY=<YOUR_GEMINI_API_KEY>
+GEMINI_MODEL=gemini-1.5-flash
+```
+
 선택적으로 아래 실험 파라미터를 바꿀 수 있습니다.
 
 ```bash
@@ -77,6 +85,7 @@ python trpg_prompt_rl_experiment.py
 - `can't open file ... experiment_test.py`가 뜨면 현재 경로가 `trpg RL` 폴더인지 먼저 확인하세요.
 - 파일명 오타(`experiemtn_test.py`, `experiement_test.py`)가 있으면 실행되지 않습니다.
 - `OPENAI_API_KEY`가 비어 있으면 `experiment_test.py`는 학습을 시작하지 않습니다.
+- Gemini 사용 시 `GEMINI_API_KEY`가 비어 있으면 API 연결이 실패합니다.
 - `No module named 'openai'`가 뜨면 `python -m pip install -r requirements.txt`로 설치하세요.
-- `Error code: 429 ... insufficient_quota`가 뜨면 OpenAI Billing/Usage를 확인하세요. 이 경우 `experiment_test.py`는 자동으로 Mock 모드 학습으로 전환합니다.
+- `Error code: 429 ... insufficient_quota`(OpenAI) 또는 `RESOURCE_EXHAUSTED`(Gemini)가 뜨면 API 호출 한도입니다. `experiment.py`는 해당 시점에서 실험을 즉시 종료합니다.
 - API 호출 실패 시 키/모델/네트워크 상태를 확인하세요.
