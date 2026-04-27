@@ -18,6 +18,13 @@ pip install openai
 export OPENAI_API_KEY="<YOUR_API_KEY>"
 ```
 
+또는 `trpg RL/.env` 파일에 아래처럼 작성해도 자동으로 읽습니다.
+
+```env
+OPENAI_API_KEY=<YOUR_API_KEY>
+OPENAI_MODEL=gpt-4.1-mini
+```
+
 선택적으로 아래 실험 파라미터를 바꿀 수 있습니다.
 
 ```bash

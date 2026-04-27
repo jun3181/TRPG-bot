@@ -7,7 +7,7 @@ from experiment import train
 def check_gpt_connection() -> bool:
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
     if not api_key:
-        print("[GPT 연결 실패] OPENAI_API_KEY 환경변수가 비어 있습니다.")
+        print("[GPT 연결 실패] OPENAI_API_KEY 환경변수가 비어 있습니다. (.env 또는 시스템 환경변수 확인)")
         return False
 
     try:

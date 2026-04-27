@@ -1,6 +1,39 @@
 import os
 from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent
+
+
+def load_dotenv_file():
+    """
+    외부 dotenv 패키지 없이 .env 파일을 읽어 환경변수로 반영한다.
+    우선순위:
+    1) trpg RL/.env
+    2) 프로젝트 루트(.env)
+    이미 셋업된 환경변수는 덮어쓰지 않는다.
+    """
+    candidates = [
+        BASE_DIR / ".env",
+        BASE_DIR.parent / ".env",
+    ]
+
+    for env_path in candidates:
+        if not env_path.exists():
+            continue
+
+        for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip("'").strip('"')
+            os.environ.setdefault(key, value)
+
+
+load_dotenv_file()
+
 MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 
 EPISODES = int(os.getenv("TRPG_EPISODES", "1000"))
