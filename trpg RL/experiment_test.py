@@ -1,7 +1,16 @@
 import os
+import sys
 
 from config import MODEL, USE_OPENAI_FOR_TRAINING
 from experiment import train
+
+
+def print_openai_install_guide():
+    print("[안내] openai 파이썬 패키지가 설치되어 있지 않습니다.")
+    print("[안내] 아래 명령어로 설치 후 다시 실행하세요.")
+    print(f"  {sys.executable} -m pip install openai")
+    print("  또는")
+    print(f"  {sys.executable} -m pip install -r requirements.txt")
 
 
 def check_gpt_connection() -> bool:
@@ -22,6 +31,13 @@ def check_gpt_connection() -> bool:
         preview = (response.output_text or "").strip()
         print(f"[GPT 연결 성공] model={MODEL}, 응답={preview}")
         return True
+    except ModuleNotFoundError as exc:
+        if exc.name == "openai":
+            print("[GPT 연결 실패] No module named 'openai'")
+            print_openai_install_guide()
+            return False
+        print(f"[GPT 연결 실패] {exc}")
+        return False
     except Exception as exc:
         print(f"[GPT 연결 실패] {exc}")
         return False

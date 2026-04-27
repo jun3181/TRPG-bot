@@ -7,10 +7,12 @@
 ### Python 패키지 설치
 
 ```bash
-pip install openai
+cd "trpg RL"
+python -m pip install -r requirements.txt
 ```
 
 > `experiment_test.py`는 OpenAI 연결 확인을 먼저 수행합니다.
+> Windows PowerShell에서는 `py -m pip install -r requirements.txt`도 가능합니다.
 
 ### 환경변수 설정
 
@@ -75,5 +77,5 @@ python trpg_prompt_rl_experiment.py
 - `can't open file ... experiment_test.py`가 뜨면 현재 경로가 `trpg RL` 폴더인지 먼저 확인하세요.
 - 파일명 오타(`experiemtn_test.py`, `experiement_test.py`)가 있으면 실행되지 않습니다.
 - `OPENAI_API_KEY`가 비어 있으면 `experiment_test.py`는 학습을 시작하지 않습니다.
-- OpenAI 패키지가 없으면 `pip install openai`로 설치하세요.
+- `No module named 'openai'`가 뜨면 `python -m pip install -r requirements.txt`로 설치하세요.
 - API 호출 실패 시 키/모델/네트워크 상태를 확인하세요.
