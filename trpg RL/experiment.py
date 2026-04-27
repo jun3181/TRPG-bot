@@ -2,7 +2,7 @@ import random
 from typing import Any, Dict, List, Tuple
 
 from config import ACTIONS, EPISODES, EPSILON_END, EPSILON_START, LEARNING_RATE, PLAYER_INPUT_SAMPLES
-from generators import DialogueGenerator, PromptGenerator
+from generators import ApiQuotaExceededError, DialogueGenerator, PromptGenerator
 from io_utils import export_episode_logs_csv, save_prompt_history_json, save_prompt_json
 from models import DialogueState
 from policy import PromptPolicy
@@ -50,9 +50,13 @@ def train(use_openai_for_training: bool) -> Tuple[PromptPolicy, List[Dict[str, A
     logs: List[Dict[str, Any]] = []
 
     for i in range(1, EPISODES + 1):
-        log = experiment.run_episode(i)
-        logs.append(log)
-        save_prompt_json(log["prompt_pack"])
+        try:
+            log = experiment.run_episode(i)
+            logs.append(log)
+            save_prompt_json(log["prompt_pack"])
+        except ApiQuotaExceededError:
+            print(f"\\n[{i} episode 중단] API 호출 한도(쿼터)가 소진되어 실험을 종료합니다.")
+            break
 
         if i % 100 == 0:
             print(f"\\n[{i} episode 완료]")

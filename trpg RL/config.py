@@ -34,7 +34,11 @@ def load_dotenv_file():
 
 load_dotenv_file()
 
-MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+API_PROVIDER = os.getenv("TRPG_API_PROVIDER", "openai").strip().lower()
+
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+MODEL = GEMINI_MODEL if API_PROVIDER == "gemini" else OPENAI_MODEL
 
 EPISODES = int(os.getenv("TRPG_EPISODES", "1000"))
 LEARNING_RATE = float(os.getenv("TRPG_LEARNING_RATE", "0.1"))
@@ -44,7 +48,7 @@ EPSILON_END = float(os.getenv("TRPG_EPSILON_END", "0.05"))
 USE_OPENAI_FOR_TRAINING = os.getenv("TRPG_USE_OPENAI_FOR_TRAINING", "false").lower() == "true"
 USE_OPENAI_FOR_FINAL_TEST = os.getenv("TRPG_USE_OPENAI_FOR_FINAL_TEST", "false").lower() == "true"
 
-OUTPUT_DIR = Path("trpg RL/outputs")
+OUTPUT_DIR = BASE_DIR / "outputs"
 PROMPT_JSON_PATH = OUTPUT_DIR / "latest_prompt_pack.json"
 PROMPT_HISTORY_JSON_PATH = OUTPUT_DIR / "prompt_packs.json"
 EPISODE_CSV_PATH = OUTPUT_DIR / "episode_dialogues.csv"

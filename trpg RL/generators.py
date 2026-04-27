@@ -1,8 +1,13 @@
 import json
+from urllib import error, request
 from typing import Any, Dict
 
-from config import ACTIONS, DIALOGUE_OUTPUT_SCHEMA, MODEL
+from config import ACTIONS, API_PROVIDER, DIALOGUE_OUTPUT_SCHEMA, GEMINI_MODEL, MODEL
 from models import DialogueState
+
+
+class ApiQuotaExceededError(RuntimeError):
+    """API 호출 한도 초과 시 학습을 중단하기 위한 예외."""
 
 
 class PromptGenerator:
@@ -15,9 +20,6 @@ class PromptGenerator:
         return self._mock(state, action_name)
 
     def _call_api(self, state: DialogueState, action_name: str) -> Dict[str, str]:
-        from openai import OpenAI
-
-        client = OpenAI()
         action = ACTIONS[action_name]
 
         system_prompt = """
@@ -50,12 +52,34 @@ Dialogue Generator GPT에게 전달할 프롬프트를 작성하는 것이다.
 - description: {action['description']}
 - target: {action['target']}
 
-Dialogue Generator에게 줄 프롬프트 3개를 작성하라:
-1. system_prompt
-2. developer_prompt
-3. user_prompt
+반드시 JSON 객체 하나만 출력:
+{{
+  \"system_prompt\": string,
+  \"developer_prompt\": string,
+  \"user_prompt\": string
+}}
 """.strip()
 
+        if API_PROVIDER == "gemini":
+            payload = _gemini_generate_json(
+                model=GEMINI_MODEL,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                response_schema={
+                    "type": "object",
+                    "properties": {
+                        "system_prompt": {"type": "string"},
+                        "developer_prompt": {"type": "string"},
+                        "user_prompt": {"type": "string"},
+                    },
+                    "required": ["system_prompt", "developer_prompt", "user_prompt"],
+                },
+            )
+            return payload
+
+        from openai import OpenAI
+
+        client = OpenAI()
         response = client.responses.create(
             model=MODEL,
             input=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
@@ -106,6 +130,19 @@ class DialogueGenerator:
         return self._mock(state, action_name)
 
     def _call_api(self, prompt_pack: Dict[str, str]) -> Dict[str, Any]:
+        if API_PROVIDER == "gemini":
+            return _gemini_generate_json(
+                model=GEMINI_MODEL,
+                system_prompt=prompt_pack["system_prompt"],
+                user_prompt=(
+                    prompt_pack["developer_prompt"]
+                    + "\n\n"
+                    + prompt_pack["user_prompt"]
+                    + "\n\n반드시 JSON 객체만 출력하라."
+                ),
+                response_schema=DIALOGUE_OUTPUT_SCHEMA,
+            )
+
         from openai import OpenAI
 
         client = OpenAI()
@@ -145,3 +182,56 @@ class DialogueGenerator:
                 "line_count_add": 3,
             },
         }
+
+
+def _gemini_generate_json(model: str, system_prompt: str, user_prompt: str, response_schema: Dict[str, Any]) -> Dict[str, Any]:
+    api_key = _require_gemini_api_key()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+
+    payload = {
+        "systemInstruction": {"parts": [{"text": system_prompt}]},
+        "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "responseSchema": response_schema,
+        },
+    }
+
+    req = request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with request.urlopen(req) as resp:
+            raw = resp.read().decode("utf-8")
+    except error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="ignore")
+        if exc.code == 429 or "RESOURCE_EXHAUSTED" in body or "quota" in body.lower():
+            raise ApiQuotaExceededError("Gemini API quota exhausted") from exc
+        raise RuntimeError(f"Gemini API 호출 실패: HTTP {exc.code} / {body}") from exc
+
+    data = json.loads(raw)
+    text = ""
+
+    candidates = data.get("candidates", [])
+    if candidates:
+        parts = candidates[0].get("content", {}).get("parts", [])
+        if parts:
+            text = parts[0].get("text", "")
+
+    if not text:
+        raise RuntimeError(f"Gemini 응답에서 텍스트를 찾지 못했습니다: {data}")
+
+    return json.loads(text)
+
+
+def _require_gemini_api_key() -> str:
+    import os
+
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY 환경변수가 필요합니다.")
+    return api_key
