@@ -78,4 +78,5 @@ python trpg_prompt_rl_experiment.py
 - 파일명 오타(`experiemtn_test.py`, `experiement_test.py`)가 있으면 실행되지 않습니다.
 - `OPENAI_API_KEY`가 비어 있으면 `experiment_test.py`는 학습을 시작하지 않습니다.
 - `No module named 'openai'`가 뜨면 `python -m pip install -r requirements.txt`로 설치하세요.
+- `Error code: 429 ... insufficient_quota`가 뜨면 OpenAI Billing/Usage를 확인하세요. 이 경우 `experiment_test.py`는 자동으로 Mock 모드 학습으로 전환합니다.
 - API 호출 실패 시 키/모델/네트워크 상태를 확인하세요.
