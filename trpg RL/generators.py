@@ -226,11 +226,28 @@ def _create_structured_response(client, model: str, input_messages: list, schema
             }
         )
 
-        return client.responses.create(
-            model=model,
-            input=fallback_messages,
-            text={"format": {"type": "json_object"}},
-        )
+        try:
+            return client.responses.create(
+                model=model,
+                input=fallback_messages,
+                text={"format": {"type": "json_object"}},
+            )
+        except BadRequestError:
+            # 일부 provider/모델은 json_object 강제 포맷도 실패한다.
+            # 마지막으로 포맷 강제를 제거하고 순수 텍스트로 JSON 생성을 유도한다.
+            fallback_messages.append(
+                {
+                    "role": "developer",
+                    "content": (
+                        "키 이름과 문자열 따옴표를 반드시 JSON 표준에 맞춰 출력하라. "
+                        "반드시 JSON 객체 하나만 출력하라."
+                    ),
+                }
+            )
+            return client.responses.create(
+                model=model,
+                input=fallback_messages,
+            )
 
 
 
