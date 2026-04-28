@@ -1,7 +1,9 @@
+import json
 import os
 import sys
+from urllib import error, request
 
-from config import MODEL, USE_OPENAI_FOR_TRAINING
+from config import API_PROVIDER, GEMINI_MODEL, MODEL, USE_OPENAI_FOR_TRAINING
 from experiment import train
 
 
@@ -13,23 +15,34 @@ def print_openai_install_guide():
     print(f"  {sys.executable} -m pip install -r requirements.txt")
 
 
-def check_gpt_connection() -> bool:
+def _build_openai_compatible_client():
+    from openai import OpenAI
+
+    if API_PROVIDER == "groq":
+        api_key = os.getenv("GROQ_API_KEY", "").strip()
+        if not api_key:
+            raise RuntimeError("GROQ_API_KEY 환경변수가 비어 있습니다. (.env 또는 시스템 환경변수 확인)")
+        return OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
+
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
     if not api_key:
-        print("[GPT 연결 실패] OPENAI_API_KEY 환경변수가 비어 있습니다. (.env 또는 시스템 환경변수 확인)")
-        return False
+        raise RuntimeError("OPENAI_API_KEY 환경변수가 비어 있습니다. (.env 또는 시스템 환경변수 확인)")
+    return OpenAI(api_key=api_key)
+
+
+def check_gpt_connection() -> bool:
+    if API_PROVIDER == "gemini":
+        return check_gemini_connection()
 
     try:
-        from openai import OpenAI
-
-        client = OpenAI(api_key=api_key)
+        client = _build_openai_compatible_client()
         response = client.responses.create(
             model=MODEL,
             input=[{"role": "user", "content": "연결 테스트: OK만 답해줘."}],
             max_output_tokens=20,
         )
         preview = (response.output_text or "").strip()
-        print(f"[GPT 연결 성공] model={MODEL}, 응답={preview}")
+        print(f"[GPT 연결 성공] provider={API_PROVIDER}, model={MODEL}, 응답={preview}")
         return True
     except ModuleNotFoundError as exc:
         if exc.name == "openai":
@@ -43,8 +56,40 @@ def check_gpt_connection() -> bool:
         return False
 
 
+def check_gemini_connection() -> bool:
+    api_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        print("[Gemini 연결 실패] GEMINI_API_KEY 환경변수가 비어 있습니다. (.env 또는 시스템 환경변수 확인)")
+        return False
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={api_key}"
+    payload = {
+        "contents": [{"role": "user", "parts": [{"text": "연결 테스트: OK"}]}],
+    }
+    req = request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with request.urlopen(req) as resp:
+            raw = resp.read().decode("utf-8")
+        print(f"[Gemini 연결 성공] model={GEMINI_MODEL}, 응답길이={len(raw)}")
+        return True
+    except error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="ignore")
+        print(f"[Gemini 연결 실패] HTTP {exc.code}: {body}")
+        return False
+    except Exception as exc:
+        print(f"[Gemini 연결 실패] {exc}")
+        return False
+
+
 def main():
     print("=== TRPG RL experiment_test ===")
+    print(f"API_PROVIDER = {API_PROVIDER}, MODEL = {MODEL}")
     connected = check_gpt_connection()
 
     print("\n명령어를 입력하세요.")
