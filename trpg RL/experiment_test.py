@@ -1,8 +1,11 @@
 import os
 import sys
+<<<<<<< HEAD
 import json
 from typing import Tuple
 from urllib import error, request
+=======
+>>>>>>> parent of 7d9052f (adsf)
 
 from config import API_PROVIDER, GEMINI_MODEL, MODEL
 from experiment import train
@@ -16,14 +19,18 @@ def print_openai_install_guide():
     print(f"  {sys.executable} -m pip install -r requirements.txt")
 
 
+<<<<<<< HEAD
 def check_gpt_connection() -> Tuple[bool, str]:
     if API_PROVIDER == "gemini":
         return check_gemini_connection()
 
+=======
+def check_gpt_connection() -> bool:
+>>>>>>> parent of 7d9052f (adsf)
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
     if not api_key:
         print("[GPT 연결 실패] OPENAI_API_KEY 환경변수가 비어 있습니다. (.env 또는 시스템 환경변수 확인)")
-        return False, "missing_api_key"
+        return False
 
     try:
         from openai import OpenAI
@@ -36,23 +43,17 @@ def check_gpt_connection() -> Tuple[bool, str]:
         )
         preview = (response.output_text or "").strip()
         print(f"[GPT 연결 성공] model={MODEL}, 응답={preview}")
-        return True, "ok"
+        return True
     except ModuleNotFoundError as exc:
         if exc.name == "openai":
             print("[GPT 연결 실패] No module named 'openai'")
             print_openai_install_guide()
-            return False, "missing_openai_package"
+            return False
         print(f"[GPT 연결 실패] {exc}")
-        return False, "module_error"
+        return False
     except Exception as exc:
-        err_text = str(exc)
-        if "insufficient_quota" in err_text or "Error code: 429" in err_text:
-            print("[GPT 연결 실패] 현재 OpenAI API 사용량/크레딧 한도를 초과했습니다 (429 insufficient_quota).")
-            print("[안내] platform.openai.com의 Billing/Usage에서 결제수단, 한도, 크레딧 상태를 확인하세요.")
-            print("[안내] 지금은 Mock 모드로 학습을 진행할 수 있습니다.")
-            return False, "insufficient_quota"
         print(f"[GPT 연결 실패] {exc}")
-        return False, "other_error"
+        return False
 
 
 def check_gemini_connection() -> Tuple[bool, str]:
@@ -91,8 +92,12 @@ def check_gemini_connection() -> Tuple[bool, str]:
 
 def main():
     print("=== TRPG RL experiment_test ===")
+<<<<<<< HEAD
     print(f"API_PROVIDER = {API_PROVIDER}, MODEL = {MODEL}")
     connected, reason = check_gpt_connection()
+=======
+    connected = check_gpt_connection()
+>>>>>>> parent of 7d9052f (adsf)
 
     print("\n명령어를 입력하세요.")
     print("- !test_start : 학습 시작")
@@ -102,12 +107,19 @@ def main():
         print("지원하지 않는 명령어입니다. !test_start 만 지원합니다.")
         return
 
+<<<<<<< HEAD
     if connected:
         use_openai_for_training = True
     else:
         use_openai_for_training = False
         print(f"API 연결 실패 사유: {reason}. Mock 모드로 진행합니다.")
+=======
+    if not connected:
+        print("GPT 연결이 확인되지 않아 학습을 시작하지 않습니다.")
+        return
+>>>>>>> parent of 7d9052f (adsf)
 
+    use_openai_for_training = True if connected else USE_OPENAI_FOR_TRAINING
     print(f"학습 시작 (OpenAI 사용: {use_openai_for_training})")
 
     policy, logs = train(use_openai_for_training=use_openai_for_training)

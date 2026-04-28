@@ -87,5 +87,8 @@ python trpg_prompt_rl_experiment.py
 - `OPENAI_API_KEY`가 비어 있으면 `experiment_test.py`는 학습을 시작하지 않습니다.
 - Gemini 사용 시 `GEMINI_API_KEY`가 비어 있으면 API 연결이 실패합니다.
 - `No module named 'openai'`가 뜨면 `python -m pip install -r requirements.txt`로 설치하세요.
+<<<<<<< HEAD
 - `Error code: 429 ... insufficient_quota`(OpenAI) 또는 `RESOURCE_EXHAUSTED`(Gemini)가 뜨면 API 호출 한도입니다. `experiment.py`는 해당 시점에서 실험을 즉시 종료합니다.
+=======
+>>>>>>> parent of 7d9052f (adsf)
 - API 호출 실패 시 키/모델/네트워크 상태를 확인하세요.
