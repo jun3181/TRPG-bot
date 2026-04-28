@@ -199,11 +199,12 @@ def _create_structured_response(client, model: str, input_messages: list, schema
     - Groq 일부 모델은 json_schema 미지원.
     """
     from openai import BadRequestError
+    prepared_messages = _normalize_messages_for_provider(input_messages)
 
     try:
         return client.responses.create(
             model=model,
-            input=input_messages,
+            input=prepared_messages,
             text={
                 "format": {
                     "type": "json_schema",
@@ -215,13 +216,14 @@ def _create_structured_response(client, model: str, input_messages: list, schema
         )
     except BadRequestError as exc:
         message = str(exc)
-        if "json_schema" not in message and "response_format" not in message:
+        is_schema_format_issue = "json_schema" in message or "response_format" in message
+        if not is_schema_format_issue and API_PROVIDER != "groq":
             raise
 
-        fallback_messages = list(input_messages)
+        fallback_messages = list(prepared_messages)
         fallback_messages.append(
             {
-                "role": "developer",
+                "role": "system",
                 "content": "반드시 JSON 객체만 출력하라. 설명 문장이나 코드블록을 출력하지 마라.",
             }
         )
@@ -237,7 +239,7 @@ def _create_structured_response(client, model: str, input_messages: list, schema
             # 마지막으로 포맷 강제를 제거하고 순수 텍스트로 JSON 생성을 유도한다.
             fallback_messages.append(
                 {
-                    "role": "developer",
+                    "role": "system",
                     "content": (
                         "키 이름과 문자열 따옴표를 반드시 JSON 표준에 맞춰 출력하라. "
                         "반드시 JSON 객체 하나만 출력하라."
@@ -248,6 +250,23 @@ def _create_structured_response(client, model: str, input_messages: list, schema
                 model=model,
                 input=fallback_messages,
             )
+
+
+def _normalize_messages_for_provider(input_messages: list) -> list:
+    """
+    provider별로 지원하지 않는 role/필드를 최소화한다.
+    - Groq(OpenAI 호환): developer role을 system role로 치환.
+    """
+    if API_PROVIDER != "groq":
+        return input_messages
+
+    normalized = []
+    for message in input_messages:
+        role = message.get("role", "user")
+        if role == "developer":
+            role = "system"
+        normalized.append({"role": role, "content": message.get("content", "")})
+    return normalized
 
 
 
