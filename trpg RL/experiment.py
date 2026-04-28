@@ -10,13 +10,13 @@ from reward import calculate_reward
 
 
 class TRPGRLExperiment:
-    def __init__(self, use_openai_for_training: bool):
-        self.policy = PromptPolicy(ACTIONS, learning_rate=LEARNING_RATE)
+    def __init__(self, use_openai_for_training: bool, learning_rate: float):
+        self.policy = PromptPolicy(ACTIONS, learning_rate=learning_rate)
         self.prompt_generator = PromptGenerator(use_openai=use_openai_for_training)
         self.dialogue_generator = DialogueGenerator(use_openai=use_openai_for_training)
 
-    def run_episode(self, episode_index: int) -> Dict[str, Any]:
-        epsilon = EPSILON_END + (EPSILON_START - EPSILON_END) * (1 - episode_index / EPISODES)
+    def run_episode(self, episode_index: int, total_episodes: int, epsilon_start: float, epsilon_end: float) -> Dict[str, Any]:
+        epsilon = epsilon_end + (epsilon_start - epsilon_end) * (1 - episode_index / total_episodes)
         state = DialogueState(
             scene_id="start_village",
             npc_id="village_chief",
@@ -45,20 +45,32 @@ class TRPGRLExperiment:
         }
 
 
-def train(use_openai_for_training: bool) -> Tuple[PromptPolicy, List[Dict[str, Any]]]:
-    experiment = TRPGRLExperiment(use_openai_for_training=use_openai_for_training)
+def train(
+    use_openai_for_training: bool,
+    episodes: int = EPISODES,
+    learning_rate: float = LEARNING_RATE,
+    epsilon_start: float = EPSILON_START,
+    epsilon_end: float = EPSILON_END,
+    log_every: int = 100,
+) -> Tuple[PromptPolicy, List[Dict[str, Any]]]:
+    experiment = TRPGRLExperiment(use_openai_for_training=use_openai_for_training, learning_rate=learning_rate)
     logs: List[Dict[str, Any]] = []
 
-    for i in range(1, EPISODES + 1):
+    for i in range(1, episodes + 1):
         try:
-            log = experiment.run_episode(i)
+            log = experiment.run_episode(
+                episode_index=i,
+                total_episodes=episodes,
+                epsilon_start=epsilon_start,
+                epsilon_end=epsilon_end,
+            )
             logs.append(log)
             save_prompt_json(log["prompt_pack"])
         except ApiQuotaExceededError:
             print(f"\\n[{i} episode 중단] API 호출 한도(쿼터)가 소진되어 실험을 종료합니다.")
             break
 
-        if i % 100 == 0:
+        if log_every > 0 and i % log_every == 0:
             print(f"\\n[{i} episode 완료]")
             print("현재 Q-values:")
             for action, q in sorted(experiment.policy.q_values.items(), key=lambda x: x[1], reverse=True):

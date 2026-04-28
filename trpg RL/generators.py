@@ -77,29 +77,23 @@ Dialogue Generator GPT에게 전달할 프롬프트를 작성하는 것이다.
             )
             return payload
 
-        from openai import OpenAI
-
-        client = OpenAI()
-        response = client.responses.create(
-            model=MODEL,
-            input=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
-            text={
-                "format": {
-                    "type": "json_schema",
-                    "name": "prompt_pack",
-                    "strict": True,
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "system_prompt": {"type": "string"},
-                            "developer_prompt": {"type": "string"},
-                            "user_prompt": {"type": "string"},
-                        },
-                        "required": ["system_prompt", "developer_prompt", "user_prompt"],
-                        "additionalProperties": False,
-                    },
-                }
+        client = _build_openai_compatible_client()
+        prompt_pack_schema = {
+            "type": "object",
+            "properties": {
+                "system_prompt": {"type": "string"},
+                "developer_prompt": {"type": "string"},
+                "user_prompt": {"type": "string"},
             },
+            "required": ["system_prompt", "developer_prompt", "user_prompt"],
+            "additionalProperties": False,
+        }
+        response = _create_structured_response(
+            client=client,
+            model=MODEL,
+            input_messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+            schema_name="prompt_pack",
+            schema=prompt_pack_schema,
         )
         return json.loads(response.output_text)
 
@@ -143,24 +137,17 @@ class DialogueGenerator:
                 response_schema=DIALOGUE_OUTPUT_SCHEMA,
             )
 
-        from openai import OpenAI
-
-        client = OpenAI()
-        response = client.responses.create(
+        client = _build_openai_compatible_client()
+        response = _create_structured_response(
+            client=client,
             model=MODEL,
-            input=[
+            input_messages=[
                 {"role": "system", "content": prompt_pack["system_prompt"]},
                 {"role": "developer", "content": prompt_pack["developer_prompt"]},
                 {"role": "user", "content": prompt_pack["user_prompt"]},
             ],
-            text={
-                "format": {
-                    "type": "json_schema",
-                    "name": "chief_dialogue_result",
-                    "strict": True,
-                    "schema": DIALOGUE_OUTPUT_SCHEMA,
-                }
-            },
+            schema_name="chief_dialogue_result",
+            schema=DIALOGUE_OUTPUT_SCHEMA,
         )
         return json.loads(response.output_text)
 
@@ -182,6 +169,105 @@ class DialogueGenerator:
                 "line_count_add": 3,
             },
         }
+
+
+
+def _build_openai_compatible_client():
+    from openai import OpenAI
+
+    if API_PROVIDER == "groq":
+        return OpenAI(
+            api_key=_require_groq_api_key(),
+            base_url="https://api.groq.com/openai/v1",
+        )
+
+    return OpenAI()
+
+
+def _require_groq_api_key() -> str:
+    import os
+
+    api_key = os.getenv("GROQ_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("GROQ_API_KEY 환경변수가 필요합니다.")
+    return api_key
+
+
+def _create_structured_response(client, model: str, input_messages: list, schema_name: str, schema: Dict[str, Any]):
+    """
+    우선 json_schema를 사용하고, provider/모델이 미지원이면 json_object로 재시도한다.
+    - Groq 일부 모델은 json_schema 미지원.
+    """
+    from openai import BadRequestError
+    prepared_messages = _normalize_messages_for_provider(input_messages)
+
+    try:
+        return client.responses.create(
+            model=model,
+            input=prepared_messages,
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": schema_name,
+                    "strict": True,
+                    "schema": schema,
+                }
+            },
+        )
+    except BadRequestError as exc:
+        message = str(exc)
+        is_schema_format_issue = "json_schema" in message or "response_format" in message
+        if not is_schema_format_issue and API_PROVIDER != "groq":
+            raise
+
+        fallback_messages = list(prepared_messages)
+        fallback_messages.append(
+            {
+                "role": "system",
+                "content": "반드시 JSON 객체만 출력하라. 설명 문장이나 코드블록을 출력하지 마라.",
+            }
+        )
+
+        try:
+            return client.responses.create(
+                model=model,
+                input=fallback_messages,
+                text={"format": {"type": "json_object"}},
+            )
+        except BadRequestError:
+            # 일부 provider/모델은 json_object 강제 포맷도 실패한다.
+            # 마지막으로 포맷 강제를 제거하고 순수 텍스트로 JSON 생성을 유도한다.
+            fallback_messages.append(
+                {
+                    "role": "system",
+                    "content": (
+                        "키 이름과 문자열 따옴표를 반드시 JSON 표준에 맞춰 출력하라. "
+                        "반드시 JSON 객체 하나만 출력하라."
+                    ),
+                }
+            )
+            return client.responses.create(
+                model=model,
+                input=fallback_messages,
+            )
+
+
+def _normalize_messages_for_provider(input_messages: list) -> list:
+    """
+    provider별로 지원하지 않는 role/필드를 최소화한다.
+    - Groq(OpenAI 호환): developer role을 system role로 치환.
+    """
+    if API_PROVIDER != "groq":
+        return input_messages
+
+    normalized = []
+    for message in input_messages:
+        role = message.get("role", "user")
+        if role == "developer":
+            role = "system"
+        normalized.append({"role": role, "content": message.get("content", "")})
+    return normalized
+
 
 
 def _gemini_generate_json(model: str, system_prompt: str, user_prompt: str, response_schema: Dict[str, Any]) -> Dict[str, Any]:
