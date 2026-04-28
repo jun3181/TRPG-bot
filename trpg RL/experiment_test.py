@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import inspect
 from urllib import error, request
 
 from config import (
@@ -212,6 +213,36 @@ def ask_training_config():
     return total_episodes, learning_rate, epsilon_start, epsilon_end, log_every
 
 
+def run_train_with_compat(
+    total_episodes: int,
+    learning_rate: float,
+    epsilon_start: float,
+    epsilon_end: float,
+    log_every: int,
+):
+    """
+    train() 함수 시그니처가 구버전/신버전 어느 쪽이든 동작하도록 호환 실행한다.
+    - 신버전: episodes, learning_rate, epsilon_* , log_every 인자 지원
+    - 구버전: use_openai_for_training만 지원 (설정값은 무시)
+    """
+    params = set(inspect.signature(train).parameters.keys())
+    supports_runtime_config = {"episodes", "learning_rate", "epsilon_start", "epsilon_end", "log_every"}.issubset(params)
+
+    if supports_runtime_config:
+        return train(
+            use_openai_for_training=True,
+            episodes=total_episodes,
+            learning_rate=learning_rate,
+            epsilon_start=epsilon_start,
+            epsilon_end=epsilon_end,
+            log_every=log_every,
+        )
+
+    print("[호환 모드] 현재 experiment.py의 train()이 구버전이라 입력한 학습 설정값은 적용되지 않습니다.")
+    print("[호환 모드] 코드 업데이트 후 다시 실행하면 episodes/epsilon/log 설정이 반영됩니다.")
+    return train(use_openai_for_training=True)
+
+
 def main():
     print("=== TRPG RL experiment_test ===")
     print(f"API_PROVIDER = {API_PROVIDER}, MODEL = {MODEL}")
@@ -239,9 +270,8 @@ def main():
         if user_text == "!test_start":
             total_episodes, learning_rate, epsilon_start, epsilon_end, log_every = ask_training_config()
             print(f"\n학습 시작 (OpenAI 호환 API 사용: True)")
-            policy, logs = train(
-                use_openai_for_training=True,
-                episodes=total_episodes,
+            policy, logs = run_train_with_compat(
+                total_episodes=total_episodes,
                 learning_rate=learning_rate,
                 epsilon_start=epsilon_start,
                 epsilon_end=epsilon_end,
