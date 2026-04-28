@@ -38,7 +38,14 @@ API_PROVIDER = os.getenv("TRPG_API_PROVIDER", "openai").strip().lower()
 
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-MODEL = GEMINI_MODEL if API_PROVIDER == "gemini" else OPENAI_MODEL
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+
+if API_PROVIDER == "gemini":
+    MODEL = GEMINI_MODEL
+elif API_PROVIDER == "groq":
+    MODEL = GROQ_MODEL
+else:
+    MODEL = OPENAI_MODEL
 
 EPISODES = int(os.getenv("TRPG_EPISODES", "1000"))
 LEARNING_RATE = float(os.getenv("TRPG_LEARNING_RATE", "0.1"))
