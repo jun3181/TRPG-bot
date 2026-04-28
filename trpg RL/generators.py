@@ -1,4 +1,5 @@
 import json
+from types import SimpleNamespace
 from urllib import error, request
 from typing import Any, Dict
 
@@ -198,6 +199,15 @@ def _create_structured_response(client, model: str, input_messages: list, schema
     우선 json_schema를 사용하고, provider/모델이 미지원이면 json_object로 재시도한다.
     - Groq 일부 모델은 json_schema 미지원.
     """
+    if API_PROVIDER == "groq":
+        return _create_groq_structured_response(
+            client=client,
+            model=model,
+            input_messages=input_messages,
+            schema_name=schema_name,
+            schema=schema,
+        )
+
     from openai import BadRequestError
     prepared_messages = _normalize_messages_for_provider(input_messages)
 
@@ -250,6 +260,38 @@ def _create_structured_response(client, model: str, input_messages: list, schema
                 model=model,
                 input=fallback_messages,
             )
+
+
+def _create_groq_structured_response(client, model: str, input_messages: list, schema_name: str, schema: Dict[str, Any]):
+    from openai import BadRequestError
+
+    messages = _normalize_messages_for_provider(input_messages)
+    schema_guide = json.dumps(schema, ensure_ascii=False)
+    messages = list(messages) + [
+        {
+            "role": "system",
+            "content": (
+                f"반드시 유효한 JSON 객체 하나만 출력하라. schema_name={schema_name}. "
+                f"아래 JSON 스키마를 반드시 만족하라: {schema_guide}"
+            ),
+        }
+    ]
+
+    try:
+        completion = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            response_format={"type": "json_object"},
+        )
+    except BadRequestError:
+        # 모델이 response_format을 지원하지 않는 경우 포맷 강제 없이 재시도
+        completion = client.chat.completions.create(
+            model=model,
+            messages=messages,
+        )
+
+    output_text = completion.choices[0].message.content or "{}"
+    return SimpleNamespace(output_text=output_text)
 
 
 def _normalize_messages_for_provider(input_messages: list) -> list:
