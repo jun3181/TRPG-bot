@@ -77,9 +77,7 @@ Dialogue Generator GPT에게 전달할 프롬프트를 작성하는 것이다.
             )
             return payload
 
-        from openai import OpenAI
-
-        client = OpenAI()
+        client = _build_openai_compatible_client()
         response = client.responses.create(
             model=MODEL,
             input=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
@@ -143,9 +141,7 @@ class DialogueGenerator:
                 response_schema=DIALOGUE_OUTPUT_SCHEMA,
             )
 
-        from openai import OpenAI
-
-        client = OpenAI()
+        client = _build_openai_compatible_client()
         response = client.responses.create(
             model=MODEL,
             input=[
@@ -182,6 +178,29 @@ class DialogueGenerator:
                 "line_count_add": 3,
             },
         }
+
+
+
+def _build_openai_compatible_client():
+    from openai import OpenAI
+
+    if API_PROVIDER == "groq":
+        return OpenAI(
+            api_key=_require_groq_api_key(),
+            base_url="https://api.groq.com/openai/v1",
+        )
+
+    return OpenAI()
+
+
+def _require_groq_api_key() -> str:
+    import os
+
+    api_key = os.getenv("GROQ_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("GROQ_API_KEY 환경변수가 필요합니다.")
+    return api_key
+
 
 
 def _gemini_generate_json(model: str, system_prompt: str, user_prompt: str, response_schema: Dict[str, Any]) -> Dict[str, Any]:
