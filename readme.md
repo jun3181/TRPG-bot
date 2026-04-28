@@ -10,7 +10,7 @@
 pip install openai
 ```
 
-> `experiment_test.py`는 OpenAI 연결 확인을 먼저 수행합니다.
+> `trpg RL/experiment_test.py`는 API 연결 확인을 먼저 수행합니다.
 
 ### 환경변수 설정
 
@@ -35,15 +35,16 @@ export TRPG_USE_OPENAI_FOR_FINAL_TEST="false"
 루트에서 아래를 실행합니다.
 
 ```bash
-python experiment_test.py
+python "trpg RL/experiment_test.py"
 ```
 
 실행 흐름:
 
-1. GPT(OpenAI) 연결 확인
-2. 콘솔에서 `!test_start` 입력
-3. 연결이 성공한 경우 학습 시작
-4. 학습 결과 출력 및 로그 파일 생성
+1. API 연결 확인 (`TRPG_API_PROVIDER` 기준)
+2. 일반 문장을 입력해 챗봇과 직접 대화하며 연결 상태 확인
+3. `!test_start` 입력
+4. 에포크/에피소드/학습률/epsilon 등 설정값 입력
+5. 학습 시작 후 결과 출력 및 로그 파일 생성
 
 ## 3) 기존 메인 스크립트 실행
 
@@ -63,6 +64,6 @@ python "trpg RL/trpg_prompt_rl_experiment.py"
 
 ## 5) 문제 해결
 
-- `OPENAI_API_KEY`가 비어 있으면 `experiment_test.py`는 학습을 시작하지 않습니다.
+- `OPENAI_API_KEY`(또는 provider별 API key)가 비어 있으면 `trpg RL/experiment_test.py`는 학습을 시작하지 않습니다.
 - OpenAI 패키지가 없으면 `pip install openai`로 설치하세요.
 - API 호출 실패 시 키/모델/네트워크 상태를 확인하세요.
