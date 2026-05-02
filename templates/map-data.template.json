@@ -1,0 +1,88 @@
+{
+  "world_name": "에테르 연대기",
+  "regions": [
+    {
+      "region_id": "reg_01",
+      "region_name": "아르테아 대륙",
+      "maps": [
+        {
+          "map_id": "town_01",
+          "map_name": "바람꽃 마을",
+          "type": "town",
+          "connected_maps": [
+            "field_01",
+            "dungeon_01"
+          ]
+        },
+        {
+          "map_id": "field_01",
+          "map_name": "은빛 초원",
+          "type": "field",
+          "connected_maps": [
+            "town_01",
+            "dungeon_01"
+          ]
+        },
+        {
+          "map_id": "dungeon_01",
+          "map_name": "잊힌 지하 유적",
+          "type": "dungeon",
+          "connected_maps": [
+            "town_01",
+            "field_01"
+          ]
+        }
+      ]
+    }
+  ],
+  "town_npcs": {
+    "town_01": [
+      {
+        "npc_id": "npc_chief_01",
+        "name": "촌장 에단",
+        "role": "chief",
+        "prompt": "마을을 지키는 촌장. 처음 온 모험가를 환영하고 기본 장비를 챙겨준다.",
+        "quest_hooks": [
+          "나무검 지급",
+          "사슴 5마리 토벌 퀘스트 부여",
+          "완료 보고 받기"
+        ]
+      },
+      {
+        "npc_id": "npc_blacksmith_01",
+        "name": "대장장이 브론",
+        "role": "blacksmith",
+        "prompt": "무기 강화와 수리에 특화된 과묵한 대장장이. 짧고 단호하게 말한다."
+      },
+      {
+        "npc_id": "npc_innkeeper_01",
+        "name": "여관주인 리아",
+        "role": "innkeeper",
+        "prompt": "밝고 친절한 여관주인. 플레이어 상태를 묻고 휴식을 권한다."
+      }
+    ]
+  },
+  "starter_quests": [
+    {
+      "quest_id": "quest_field_deer_01",
+      "title": "초보 사냥 훈련",
+      "giver_npc_id": "npc_chief_01",
+      "objective": {
+        "type": "hunt",
+        "target": "사슴",
+        "required_count": 5
+      },
+      "reward": {
+        "gold": 100,
+        "items": [
+          {
+            "name": "회복약",
+            "count": 2
+          }
+        ]
+      },
+      "field_map_id": "field_01",
+      "turn_in_npc_id": "npc_chief_01"
+    }
+  ]
+}
