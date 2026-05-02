@@ -1,0 +1,45 @@
+{
+  "player_id": "player_001",
+  "name": "홍길동",
+  "stats": {
+    "hp": 100,
+    "mp": 30,
+    "strength": 12,
+    "dexterity": 10,
+    "intelligence": 8,
+    "vitality": 11,
+    "luck": 7
+  },
+  "job": {
+    "name": "전사",
+    "tier": "초급",
+    "skills": [
+      "강타",
+      "방패 올리기"
+    ]
+  },
+  "equipment": {
+    "weapon": {
+      "name": "낡은 장검",
+      "attack": 4
+    },
+    "armor": {
+      "name": "가죽 갑옷",
+      "defense": 3
+    },
+    "accessory": {
+      "name": "초심자의 반지",
+      "effect": "행운 +1"
+    },
+    "inventory": [
+      { "name": "체력 물약", "count": 3 },
+      { "name": "마나 물약", "count": 1 }
+    ]
+  },
+  "current_location": {
+    "region": "아르테아 대륙",
+    "map_id": "town_01",
+    "map_name": "바람꽃 마을",
+    "sub_location": "중앙 광장"
+  }
+}
