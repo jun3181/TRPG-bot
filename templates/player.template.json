@@ -1,16 +1,28 @@
 {
-  "player_id": "player_001",
-  "name": "홍길동",
+  "player_id": 297992090141327361,
+  "login_id": "asdf",
+  "nickname": "asdf",
+  "job": "전사",
   "stats": {
-    "hp": 100,
-    "mp": 30,
-    "strength": 12,
-    "dexterity": 10,
-    "intelligence": 8,
-    "vitality": 11,
-    "luck": 7
+    "base": {
+      "speed": 2,
+      "attack": 6,
+      "defense": 5
+    },
+    "bonus": {
+      "speed": 0,
+      "attack": 1,
+      "defense": 2
+    },
+    "final": {
+      "speed": 2,
+      "attack": 7,
+      "defense": 7
+    }
   },
-  "job": {
+  "created_at": "2026-04-25T20:08:56.722732+00:00",
+  "updated_at": "2026-04-25T20:08:56.722732+00:00",
+  "job_detail": {
     "name": "전사",
     "tier": "초급",
     "skills": [
