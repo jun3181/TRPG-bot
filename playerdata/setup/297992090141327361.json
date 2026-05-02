@@ -1,0 +1,13 @@
+{
+  "discord_user_id": 297992090141327361,
+  "login_id": "asdf",
+  "password_set": true,
+  "nickname": "asdf",
+  "job": "전사",
+  "dice": {
+    "speed": 3,
+    "attack": 3,
+    "defense": 2
+  },
+  "updated_at": "2026-05-02T20:57:57.032042+00:00"
+}

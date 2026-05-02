@@ -1,0 +1,25 @@
+{
+  "player_id": 297992090141327361,
+  "login_id": "asdf",
+  "nickname": "asdf",
+  "job": "전사",
+  "stats": {
+    "base": {
+      "speed": 3,
+      "attack": 3,
+      "defense": 2
+    },
+    "bonus": {
+      "speed": 0,
+      "attack": 1,
+      "defense": 2
+    },
+    "final": {
+      "speed": 3,
+      "attack": 4,
+      "defense": 4
+    }
+  },
+  "created_at": "2026-05-02T20:58:01.593334+00:00",
+  "updated_at": "2026-05-02T20:58:01.593334+00:00"
+}
