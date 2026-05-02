@@ -44,14 +44,8 @@
       "effect": "행운 +1"
     },
     "inventory": [
-      {
-        "name": "체력 물약",
-        "count": 3
-      },
-      {
-        "name": "마나 물약",
-        "count": 1
-      }
+      { "name": "체력 물약", "count": 3 },
+      { "name": "마나 물약", "count": 1 }
     ]
   },
   "current_location": {

@@ -1,0 +1,51 @@
+{
+  "world_name": "에테르 연대기",
+  "regions": [
+    {
+      "region_id": "reg_01",
+      "region_name": "아르테아 대륙",
+      "maps": [
+        {
+          "map_id": "town_01",
+          "map_name": "바람꽃 마을",
+          "type": "town",
+          "connected_maps": ["field_01", "dungeon_01"]
+        },
+        {
+          "map_id": "field_01",
+          "map_name": "은빛 초원",
+          "type": "field",
+          "connected_maps": ["town_01", "dungeon_01"]
+        },
+        {
+          "map_id": "dungeon_01",
+          "map_name": "잊힌 지하 유적",
+          "type": "dungeon",
+          "connected_maps": ["town_01", "field_01"]
+        }
+      ]
+    }
+  ],
+  "town_npcs": {
+    "town_01": [
+      {
+        "npc_id": "npc_blacksmith_01",
+        "name": "대장장이 브론",
+        "role": "blacksmith",
+        "prompt": "무기 강화와 수리에 특화된 과묵한 대장장이. 짧고 단호하게 말한다."
+      },
+      {
+        "npc_id": "npc_innkeeper_01",
+        "name": "여관주인 리아",
+        "role": "innkeeper",
+        "prompt": "밝고 친절한 여관주인. 플레이어 상태를 묻고 휴식을 권한다."
+      },
+      {
+        "npc_id": "npc_merchant_01",
+        "name": "상인 카엘",
+        "role": "merchant",
+        "prompt": "정보에 밝은 떠돌이 상인. 소문과 아이템 힌트를 함께 제공한다."
+      }
+    ]
+  }
+}
