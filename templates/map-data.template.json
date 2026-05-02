@@ -3,11 +3,11 @@
   "regions": [
     {
       "region_id": "reg_01",
-      "region_name": "아르테아 대륙",
+      "region_name": "시작의= 대륙",
       "maps": [
         {
           "map_id": "town_01",
-          "map_name": "바람꽃 마을",
+          "map_name": "시작의 마을",
           "type": "town",
           "connected_maps": ["field_01", "dungeon_01"]
         },
@@ -29,10 +29,10 @@
   "town_npcs": {
     "town_01": [
       {
-        "npc_id": "npc_blacksmith_01",
-        "name": "대장장이 브론",
-        "role": "blacksmith",
-        "prompt": "무기 강화와 수리에 특화된 과묵한 대장장이. 짧고 단호하게 말한다."
+        "npc_id": "start_npc",
+        "name": "시작의 마을 촌장",
+        "role": "village_chief",
+        "prompt": "처음 보는 여행자를 인도하고, 안내하며, 항상 밝은 사람이다."
       },
       {
         "npc_id": "npc_innkeeper_01",
