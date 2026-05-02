@@ -9,6 +9,21 @@ from pathlib import Path
 from typing import Any
 
 
+
+
+GAME_START_INTRO = (
+    "📍 위치: 시작의 마을\n"
+    "🧙 촌장 에단: \"오, 모험가여! 시작의 마을에 온 걸 환영하네.\"\n"
+    "🧙 촌장 에단: \"먼저 나와 대화해 나무검을 챙기고, 사슴 5마리 토벌 퀘스트를 받아가게!\"\n"
+    "\n[시작 퀘스트 플로우]\n"
+    "1) !대화하기 \"촌장 에단\"  (나무검 획득 + 퀘스트 수락)\n"
+    "2) !필드  (사슴 5마리 처치)\n"
+    "3) !마을탐방  (NPC 목록 확인)\n"
+    "4) !대화하기 \"npc이름\"  (퀘스트 완료 보고)\n"
+    "   - 예시: !대화하기 \"촌장 에단\""
+)
+
+
 class PlayerDesignManager:
     JOB_BONUSES = {
         "전사": {"speed": 0, "attack": 1, "defense": 2},
@@ -145,7 +160,7 @@ class PlayerDesignManager:
         self.logged_in_users.add(user_id)
 
         if self._player_file(user_id).exists():
-            return True, "로그인 성공! 기존 플레이어 확인 완료. 게임 시작됩니다!"
+            return True, "로그인 성공! 기존 플레이어 확인 완료. 게임 시작됩니다!\n" + GAME_START_INTRO
 
         return True, "로그인 성공!\n다음 단계: `!닉네임 <닉네임>`"
 
@@ -248,7 +263,7 @@ class PlayerDesignManager:
             "updated_at": now,
         }
         self._save_json(self._player_file(user_id), player_payload)
-        return True, "캐릭터 생성이 완료되었습니다! TRPG 준비 완료입니다.\n다음 단계: `!캐릭터 조회`로 확인하세요.", player_payload
+        return True, "캐릭터 생성이 완료되었습니다! TRPG 준비 완료입니다.\n" + GAME_START_INTRO, player_payload
 
     def get_character(self, user_id: int) -> tuple[bool, str, dict[str, Any] | None]:
         payload = self._load_json(self._player_file(user_id))
