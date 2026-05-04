@@ -271,6 +271,77 @@ class PlayerDesignManager:
             return False, "생성된 캐릭터가 없습니다.", None
         return True, "조회 성공", payload
 
+    def _load_player_for_play(self, user_id: int) -> tuple[bool, str, dict[str, Any] | None]:
+        if not self.is_logged_in(user_id):
+            return False, "먼저 `!로그인 <아이디> <비번>`을 해주세요.", None
+
+        payload = self._load_json(self._player_file(user_id))
+        if not payload:
+            return False, "먼저 `!캐릭터생성`으로 캐릭터를 만들어주세요.", None
+
+        if "quest" not in payload:
+            payload["quest"] = {
+                "accepted": False,
+                "deer_kills": 0,
+                "deer_goal": 5,
+                "completed": False,
+            }
+        return True, "ok", payload
+
+    def talk_to_npc(self, user_id: int, npc_name: str) -> tuple[bool, str]:
+        ok, message, payload = self._load_player_for_play(user_id)
+        if not ok:
+            return False, message
+
+        npc = npc_name.strip().strip('"').strip("'")
+        if npc != "촌장 에단":
+            return False, f"`{npc}` NPC를 찾을 수 없습니다. `!마을탐방`으로 확인해주세요."
+
+        quest = payload["quest"]
+        if not quest["accepted"]:
+            quest["accepted"] = True
+            self._save_json(self._player_file(user_id), payload)
+            return True, "🧙 촌장 에단: \"좋네! 이 나무검을 가져가게. 사슴 5마리를 토벌하고 돌아오게!\"\n🗡️ 나무검을 획득했습니다.\n📜 퀘스트 수락: 사슴 5마리 토벌 (0/5)"
+
+        if not quest["completed"] and quest["deer_kills"] >= quest["deer_goal"]:
+            quest["completed"] = True
+            self._save_json(self._player_file(user_id), payload)
+            return True, "🧙 촌장 에단: \"훌륭하네! 약속한 사슴 5마리를 모두 토벌했군.\"\n✅ 퀘스트 완료! 보상을 획득했습니다."
+
+        if quest["completed"]:
+            return True, "🧙 촌장 에단: \"다시 와줘서 고맙네, 모험가여.\""
+
+        return True, f"🧙 촌장 에단: \"사슴 토벌은 잘 되어가나?\"\n진행도: {quest['deer_kills']}/{quest['deer_goal']}"
+
+    def hunt_in_field(self, user_id: int) -> tuple[bool, str]:
+        ok, message, payload = self._load_player_for_play(user_id)
+        if not ok:
+            return False, message
+
+        quest = payload["quest"]
+        if not quest["accepted"]:
+            return False, "먼저 `!대화하기 \"촌장 에단\"`으로 퀘스트를 수락해주세요."
+        if quest["completed"]:
+            return True, "이미 퀘스트를 완료했습니다. `!마을탐방`으로 다른 NPC를 찾아보세요."
+
+        quest["deer_kills"] = min(quest["deer_goal"], quest["deer_kills"] + 1)
+        self._save_json(self._player_file(user_id), payload)
+        return True, f"🏹 사슴을 처치했습니다! ({quest['deer_kills']}/{quest['deer_goal']})"
+
+    def explore_village(self, user_id: int) -> tuple[bool, str]:
+        ok, message, payload = self._load_player_for_play(user_id)
+        if not ok:
+            return False, message
+
+        quest = payload["quest"]
+        return True, (
+            "🏘️ 마을탐방 결과\n"
+            "- 촌장 에단\n"
+            "- 대장장이 브론\n"
+            "- 여관주인 미라\n"
+            f"\n현재 퀘스트 진행도: 사슴 토벌 {quest['deer_kills']}/{quest['deer_goal']}"
+        )
+
 
 DEFAULT_DATA_ROOT = Path(os.getenv("PLAYER_DATA_ROOT", Path(__file__).resolve().parent / "playerdata"))
 player_design_manager = PlayerDesignManager(DEFAULT_DATA_ROOT)

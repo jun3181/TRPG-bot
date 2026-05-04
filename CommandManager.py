@@ -107,3 +107,18 @@ def register_commands(bot: commands.Bot) -> None:
                 ]
             )
         )
+
+    @bot.command(name="대화하기")
+    async def talk_command(ctx: commands.Context, *, npc_name: str):
+        ok, message = player_design_manager.talk_to_npc(ctx.author.id, npc_name)
+        await ctx.send(("✅ " if ok else "❌ ") + message)
+
+    @bot.command(name="필드")
+    async def field_command(ctx: commands.Context):
+        ok, message = player_design_manager.hunt_in_field(ctx.author.id)
+        await ctx.send(("✅ " if ok else "❌ ") + message)
+
+    @bot.command(name="마을탐방")
+    async def village_command(ctx: commands.Context):
+        ok, message = player_design_manager.explore_village(ctx.author.id)
+        await ctx.send(("✅ " if ok else "❌ ") + message)
