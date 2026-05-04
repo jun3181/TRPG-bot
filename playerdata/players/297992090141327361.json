@@ -21,5 +21,11 @@
     }
   },
   "created_at": "2026-05-02T20:58:01.593334+00:00",
-  "updated_at": "2026-05-02T20:58:01.593334+00:00"
+  "updated_at": "2026-05-02T20:58:01.593334+00:00",
+  "quest": {
+    "accepted": true,
+    "deer_kills": 0,
+    "deer_goal": 5,
+    "completed": false
+  }
 }
