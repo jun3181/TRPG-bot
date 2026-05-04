@@ -1,9 +1,31 @@
 from discord.ext import commands
+from openai import OpenAI
 
 from PlayerDesign import player_design_manager
 
 
 def register_commands(bot: commands.Bot) -> None:
+
+    def _ask_npc_llm(npc_name: str, npc_prompt: str, state_summary: str, player_input: str | None) -> str:
+        client: OpenAI = bot.trpg_llm_client
+        model: str = bot.trpg_llm_model
+        system = (
+            f"{bot.trpg_prompt_template}\n\n"
+            f"[현재 NPC] {npc_name}\n"
+            f"[NPC 성격/프롬프트] {npc_prompt}\n"
+            f"[현재 진행 상태] {state_summary}\n"
+            "규칙: NPC 말투로만 3~5문장으로 응답하고, 마지막 줄에 다음 행동 1개를 제안하세요."
+        )
+        user_msg = player_input or "플레이어가 말을 걸었다. 시작 인사 및 안내를 해줘."
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user_msg},
+            ],
+            temperature=0.7,
+        )
+        return (response.choices[0].message.content or "...").strip()
 
     @bot.command(name="TRPG시작", aliases=["티알피지시작", "티얼피지시작"])
     async def trpg_start_command(ctx: commands.Context):
@@ -107,3 +129,24 @@ def register_commands(bot: commands.Bot) -> None:
                 ]
             )
         )
+
+    @bot.command(name="대화하기")
+    async def talk_command(ctx: commands.Context, *, text: str):
+        ok, message = player_design_manager.talk_to_npc(ctx.author.id, text)
+        if not ok:
+            await ctx.send("❌ " + message)
+            return
+
+        npc_name, npc_prompt, state_summary, player_input = message
+        llm_reply = _ask_npc_llm(npc_name, npc_prompt, state_summary, player_input)
+        await ctx.send(f"✅ [{npc_name}]\n{llm_reply}")
+
+    @bot.command(name="필드")
+    async def field_command(ctx: commands.Context):
+        ok, message = player_design_manager.hunt_in_field(ctx.author.id)
+        await ctx.send(("✅ " if ok else "❌ ") + message)
+
+    @bot.command(name="마을탐방")
+    async def village_command(ctx: commands.Context):
+        ok, message = player_design_manager.explore_village(ctx.author.id)
+        await ctx.send(("✅ " if ok else "❌ ") + message)

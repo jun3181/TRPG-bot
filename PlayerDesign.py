@@ -3,6 +3,7 @@ import hmac
 import json
 import os
 import random
+import re
 import secrets
 from datetime import datetime, timezone
 from pathlib import Path
@@ -43,6 +44,8 @@ class PlayerDesignManager:
         self.setup_dir.mkdir(parents=True, exist_ok=True)
 
         self.logged_in_users: set[int] = set()
+        map_data_file = Path(__file__).resolve().parent / "templates" / "map-data.template.json"
+        self.map_data = self._load_json(map_data_file) or {}
 
     def _now(self) -> str:
         return datetime.now(timezone.utc).isoformat()
@@ -270,6 +273,96 @@ class PlayerDesignManager:
         if not payload:
             return False, "생성된 캐릭터가 없습니다.", None
         return True, "조회 성공", payload
+
+    def _load_player_for_play(self, user_id: int) -> tuple[bool, str, dict[str, Any] | None]:
+        if not self.is_logged_in(user_id):
+            return False, "먼저 `!로그인 <아이디> <비번>`을 해주세요.", None
+
+        payload = self._load_json(self._player_file(user_id))
+        if not payload:
+            return False, "먼저 `!캐릭터생성`으로 캐릭터를 만들어주세요.", None
+
+        if "quest" not in payload:
+            payload["quest"] = {
+                "accepted": False,
+                "deer_kills": 0,
+                "deer_goal": 5,
+                "completed": False,
+            }
+        return True, "ok", payload
+
+    def _find_npc(self, npc_name: str) -> dict[str, Any] | None:
+        npcs = self.map_data.get("town_npcs", {}).get("town_01", [])
+        for npc in npcs:
+            if npc.get("name") == npc_name:
+                return npc
+        return None
+
+    def talk_to_npc(self, user_id: int, raw_text: str) -> tuple[bool, Any]:
+        ok, message, payload = self._load_player_for_play(user_id)
+        if not ok:
+            return False, message
+
+        match = re.match(r'^\s*"([^"]+)"\s*(.*)$', raw_text.strip())
+        if match:
+            npc = match.group(1).strip()
+            player_input = match.group(2).strip() or None
+        else:
+            parts = raw_text.strip().split(maxsplit=1)
+            npc = parts[0].strip('"').strip("'") if parts else ""
+            player_input = parts[1].strip() if len(parts) > 1 else None
+
+        npc_data = self._find_npc(npc)
+        if not npc_data:
+            return False, f"`{npc}` NPC를 찾을 수 없습니다. `!마을탐방`으로 확인해주세요."
+
+        quest = payload["quest"]
+        state_flags = []
+        if not quest["accepted"]:
+            quest["accepted"] = True
+            state_flags.append("촌장과 첫 대화로 퀘스트 수락, 나무검 지급")
+            self._save_json(self._player_file(user_id), payload)
+        if not quest["completed"] and quest["deer_kills"] >= quest["deer_goal"]:
+            quest["completed"] = True
+            state_flags.append("퀘스트 완료 보고 가능, 보상 지급")
+            self._save_json(self._player_file(user_id), payload)
+
+        state_summary = (
+            f"퀘스트 수락 여부: {quest['accepted']}\n"
+            f"사슴 처치: {quest['deer_kills']}/{quest['deer_goal']}\n"
+            f"퀘스트 완료 여부: {quest['completed']}\n"
+            + ("이벤트: " + ", ".join(state_flags) if state_flags else "이벤트: 없음")
+        )
+        return True, (npc_data["name"], npc_data.get("prompt", ""), state_summary, player_input)
+
+    def hunt_in_field(self, user_id: int) -> tuple[bool, str]:
+        ok, message, payload = self._load_player_for_play(user_id)
+        if not ok:
+            return False, message
+
+        quest = payload["quest"]
+        if not quest["accepted"]:
+            return False, "먼저 `!대화하기 \"촌장 에단\"`으로 퀘스트를 수락해주세요."
+        if quest["completed"]:
+            return True, "이미 퀘스트를 완료했습니다. `!마을탐방`으로 다른 NPC를 찾아보세요."
+
+        quest["deer_kills"] = min(quest["deer_goal"], quest["deer_kills"] + 1)
+        self._save_json(self._player_file(user_id), payload)
+        return True, f"🏹 사슴을 처치했습니다! ({quest['deer_kills']}/{quest['deer_goal']})"
+
+    def explore_village(self, user_id: int) -> tuple[bool, str]:
+        ok, message, payload = self._load_player_for_play(user_id)
+        if not ok:
+            return False, message
+
+        quest = payload["quest"]
+        return True, (
+            "🏘️ 마을탐방 결과\n"
+            "- 촌장 에단\n"
+            "- 대장장이 브론\n"
+            "- 여관주인 미라\n"
+            f"\n현재 퀘스트 진행도: 사슴 토벌 {quest['deer_kills']}/{quest['deer_goal']}"
+        )
 
 
 DEFAULT_DATA_ROOT = Path(os.getenv("PLAYER_DATA_ROOT", Path(__file__).resolve().parent / "playerdata"))
